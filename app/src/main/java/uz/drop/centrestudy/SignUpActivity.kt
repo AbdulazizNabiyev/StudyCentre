@@ -21,6 +21,7 @@ class SignUpActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sign_up)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        title="Sign Up"
         val type = object : TypeToken<ArrayList<UserModel>>() {}.type
         if (local.userData.isNotEmpty()) {
             val list: ArrayList<UserModel> =
