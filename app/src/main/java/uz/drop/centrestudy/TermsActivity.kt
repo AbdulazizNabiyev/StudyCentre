@@ -10,6 +10,7 @@ class TermsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_terms)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        title="Terms"
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
