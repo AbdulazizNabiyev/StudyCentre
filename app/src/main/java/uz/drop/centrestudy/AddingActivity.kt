@@ -3,12 +3,15 @@ package uz.drop.centrestudy
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_adding.*
 import uz.drop.centrestudy.model.*
+import uz.drop.centrestudy.util.extensions.isEnabledCustomBackground
 import uz.drop.centrestudy.util.extensions.toCoursesListFromJson
 import uz.drop.centrestudy.util.extensions.toGroupsListFromJson
 import uz.drop.centrestudy.util.extensions.toStudentsListFromJson
@@ -25,10 +28,42 @@ class AddingActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         when (intent.getStringExtra("actionName")) {
             "course" -> {
-                title="Adding Course"
+                title = "Adding Course"
                 if (local.courses.isNotEmpty()) {
                     courseList.addAll(local.courses.toCoursesListFromJson())
+                    nameAdd.addTextChangedListener(object : TextWatcher {
+                        override fun afterTextChanged(s: Editable?) {
+                            courseList.forEach {
+                                if (it.name == s.toString()) {
+                                    layoutName.error = "This course has already occupied"
+                                    saveButton.isEnabledCustomBackground(false)
+                                } else {
+                                    layoutName.error = null
+                                    saveButton.isEnabledCustomBackground(true)
+                                }
+                            }
+                        }
+
+                        override fun beforeTextChanged(
+                            s: CharSequence?,
+                            start: Int,
+                            count: Int,
+                            after: Int
+                        ) {
+                        }
+
+                        override fun onTextChanged(
+                            s: CharSequence?,
+                            start: Int,
+                            before: Int,
+                            count: Int
+                        ) {
+                        }
+
+                    })
                 }
+
+
                 saveButton.setOnClickListener {
                     val newName = nameAdd.text.toString()
                     val userFromIntent = intent.getSerializableExtra("USER") as? UserModel
@@ -54,7 +89,7 @@ class AddingActivity : AppCompatActivity() {
                 }
             }
             "group" -> {
-                title="Adding Group"
+                title = "Adding Group"
                 if (local.groups.isNotEmpty()) {
                     groupList.addAll(local.groups.toGroupsListFromJson())
                 }
@@ -81,7 +116,7 @@ class AddingActivity : AppCompatActivity() {
                 }
             }
             "student" -> {
-                title="Adding Student"
+                title = "Adding Student"
                 if (local.students.isNotEmpty()) {
                     studentList.addAll(local.students.toStudentsListFromJson())
                 }
