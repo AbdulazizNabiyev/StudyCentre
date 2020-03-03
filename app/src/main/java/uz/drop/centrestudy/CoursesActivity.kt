@@ -30,7 +30,6 @@ class CoursesActivity : AppCompatActivity() {
         setContentView(R.layout.activity_courses)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         title = "Courses"
-
         val userFromIntent = intent.getSerializableExtra("currentUser") as? UserModel
         user = userFromIntent ?: gson.fromJson(localStorage.lastUser, UserModel::class.java)
         listView.adapter = courseAdapter
@@ -62,22 +61,31 @@ class CoursesActivity : AppCompatActivity() {
         }
         courseAdapter.setOnDeleteClickListener { pos ->
             val removedCourse = courseList.removeAt(pos)
-            val students = localStorage.students.toStudentsListFromJson()
-            val groupsList = localStorage.groups.toGroupsListFromJson()
-            groupsList.forEach { group ->
-                if (group.courseName == removedCourse.name) {
-                    groupsList.remove(group)
-                    students.forEach { student ->
-                        if (student.groupName == group.name) {
-                            students.remove(student)
+            if (localStorage.groups.isNotEmpty()){
+                val groupsList = localStorage.groups.toGroupsListFromJson()
+                groupsList.forEach { group ->
+                    if (group.courseName == removedCourse.name) {
+                        groupsList.remove(group)
+                        if (localStorage.students.isNotEmpty()){
+                            val students = localStorage.students.toStudentsListFromJson()
+                            students.forEach { student ->
+                                if (student.groupName == group.name) {
+                                    students.remove(student)
+                                }
+                            }
+                            localStorage.students = gson.toJson(students)
                         }
+
                     }
                 }
+                localStorage.groups = gson.toJson(groupsList)
+
             }
 
+
+
             localStorage.courses = gson.toJson(courseList)
-            localStorage.groups = gson.toJson(groupsList)
-            localStorage.students = gson.toJson(students)
+
             courseAdapter.notifyDataSetChanged()
         }
     }

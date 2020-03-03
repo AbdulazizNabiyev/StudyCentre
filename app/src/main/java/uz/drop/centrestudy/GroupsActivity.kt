@@ -50,14 +50,16 @@ class GroupsActivity : AppCompatActivity() {
         }
         adapter.setOnDeleteClickListener { pos ->
             val removedGroup = groupsList.removeAt(pos)
-            val students = localStorage.students.toStudentsListFromJson()
-            students.forEach { student ->
-                if (student.groupName == removedGroup.name) {
-                    students.remove(student)
+            if (localStorage.students.isNotEmpty()) {
+                val students = localStorage.students.toStudentsListFromJson()
+                students.forEach { student ->
+                    if (student.groupName == removedGroup.name) {
+                        students.remove(student)
 
+                    }
                 }
+                localStorage.students = gson.toJson(students)
             }
-
             val oldList = localStorage.courses.toCoursesListFromJson()
             oldList.forEach {
                 if (it.name == courseName) {
@@ -67,7 +69,6 @@ class GroupsActivity : AppCompatActivity() {
             localStorage.courses = gson.toJson(oldList)
 
             localStorage.groups = gson.toJson(groupsList)
-            localStorage.students = gson.toJson(students)
             adapter.notifyDataSetChanged()
 
         }
