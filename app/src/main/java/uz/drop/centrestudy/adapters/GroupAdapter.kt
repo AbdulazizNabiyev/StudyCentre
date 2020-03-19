@@ -1,17 +1,15 @@
 package uz.drop.centrestudy.adapters
 
 import android.view.LayoutInflater
-import android.view.OrientationEventListener
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
-import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.item.view.*
 import uz.drop.centrestudy.R
-import uz.drop.centrestudy.model.GroupModel
+import uz.drop.centrestudy.data.locale.room.entities.GroupData
 import uz.xsoft.lesson16pdp13.utils.extesions.loadFromUrl
 
-class GroupAdapter(val list: ArrayList<GroupModel>) : BaseAdapter() {
+class GroupAdapter(val list: ArrayList<GroupData>) : BaseAdapter() {
     private var editListener:((Int)->Unit)?=null
     private var deleteListener:((Int)->Unit)?=null
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -36,7 +34,7 @@ class GroupAdapter(val list: ArrayList<GroupModel>) : BaseAdapter() {
         deleteListener=listener
     }
 
-    override fun getItem(position: Int): GroupModel = list[position]
+    override fun getItem(position: Int): GroupData = list[position]
 
     override fun getItemId(position: Int): Long = position.toLong()
 

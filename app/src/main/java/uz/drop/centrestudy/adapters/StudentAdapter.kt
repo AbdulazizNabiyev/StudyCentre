@@ -6,9 +6,9 @@ import android.view.ViewGroup
 import android.widget.BaseAdapter
 import kotlinx.android.synthetic.main.item.view.*
 import uz.drop.centrestudy.R
-import uz.drop.centrestudy.model.StudentModel
+import uz.drop.centrestudy.data.locale.room.entities.StudentData
 
-class StudentAdapter(val list: ArrayList<StudentModel>) : BaseAdapter() {
+class StudentAdapter(val list: ArrayList<StudentData>) : BaseAdapter() {
     private var editListener: ((Int) -> Unit)? = null
     private var deleteListener: ((Int) -> Unit)? = null
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -33,7 +33,7 @@ class StudentAdapter(val list: ArrayList<StudentModel>) : BaseAdapter() {
         deleteListener=listener
     }
 
-    override fun getItem(position: Int): StudentModel = list[position]
+    override fun getItem(position: Int): StudentData = list[position]
 
     override fun getItemId(position: Int): Long = position.toLong()
 

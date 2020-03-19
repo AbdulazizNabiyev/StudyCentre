@@ -10,18 +10,23 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_adding.*
+import uz.drop.centrestudy.data.locale.room.AppDatabase
+import uz.drop.centrestudy.data.locale.room.entities.CourseData
+import uz.drop.centrestudy.data.locale.room.entities.GroupData
+import uz.drop.centrestudy.data.locale.room.entities.StudentData
+import uz.drop.centrestudy.data.locale.room.entities.UserData
 import uz.drop.centrestudy.model.*
 import uz.drop.centrestudy.util.extensions.isEnabledCustomBackground
-import uz.drop.centrestudy.util.extensions.toCoursesListFromJson
-import uz.drop.centrestudy.util.extensions.toGroupsListFromJson
-import uz.drop.centrestudy.util.extensions.toStudentsListFromJson
 
 class AddingActivity : AppCompatActivity() {
-    private val local = LocalStorage.instance
-    private val gson = Gson()
-    private val courseList = ArrayList<CourseModel>()
-    private val groupList = ArrayList<GroupModel>()
-    private val studentList = ArrayList<StudentModel>()
+    private val courseDao = AppDatabase.getDatabase().courseDao()
+    private val groupsDao = AppDatabase.getDatabase().groupDao()
+    private val studentsDao = AppDatabase.getDatabase().studentDao()
+    val gson = Gson()
+    val local = LocalStorage.instance
+    private val courseList = ArrayList<CourseData>()
+    private val groupList = ArrayList<GroupData>()
+    private val studentList = ArrayList<StudentData>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_adding)
@@ -29,8 +34,8 @@ class AddingActivity : AppCompatActivity() {
         when (intent.getStringExtra("actionName")) {
             "course" -> {
                 title = "Adding Course"
-                if (local.courses.isNotEmpty()) {
-                    courseList.addAll(local.courses.toCoursesListFromJson())
+                if (courseDao.getAll().isNotEmpty()) {
+                    courseList.addAll(courseDao.getAll())
                     nameAdd.addTextChangedListener(object : TextWatcher {
                         override fun afterTextChanged(s: Editable?) {
                             courseList.forEach {
@@ -66,23 +71,19 @@ class AddingActivity : AppCompatActivity() {
 
                 saveButton.setOnClickListener {
                     val newName = nameAdd.text.toString()
-                    val userFromIntent = intent.getSerializableExtra("USER") as? UserModel
-                    val user =
-                        userFromIntent ?: gson.fromJson(local.lastUser, UserModel::class.java)
+                    val user = intent.getSerializableExtra("USER") as? UserData
                     if (newName.isEmpty() || imageUrlAdd.text.toString().isEmpty()) {
                         Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
                     } else {
-                        val courseModel = CourseModel(
-                            imageUrlAdd.text.toString(),
-                            user.username,
-                            newName
-                        )
+                        val courseModel =
+                            CourseData(
+                                user!!.id,
+                                newName,
+                                imageUrlAdd.text.toString()
+                            )
+                        courseDao.insert(courseModel)
                         courseList.add(courseModel)
-                        val listJson = gson.toJson(courseList)
-                        local.courses = listJson
-                        val intentResult = Intent()
-                        intentResult.putExtra("coursesJson", listJson)
-                        setResult(Activity.RESULT_OK, intentResult)
+                        setResult(Activity.RESULT_OK)
                         finish()
                     }
 
@@ -90,26 +91,23 @@ class AddingActivity : AppCompatActivity() {
             }
             "group" -> {
                 title = "Adding Group"
-                if (local.groups.isNotEmpty()) {
-                    groupList.addAll(local.groups.toGroupsListFromJson())
+                if (groupsDao.getAll().isNotEmpty()) {
+                    groupList.addAll(groupsDao.getAll())
                 }
                 saveButton.setOnClickListener {
                     val newName = nameAdd.text.toString()
-
                     if (newName.isEmpty() || imageUrlAdd.text.toString().isEmpty()) {
                         Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
                     } else {
-                        val groupModel = GroupModel(
-                            imageUrlAdd.text.toString(),
-                            intent.getStringExtra("COURSENAME")!!,
-                            newName
-                        )
+                        val groupModel =
+                            GroupData(
+                                intent.getLongExtra("course_id", 0),
+                                newName,
+                                imageUrlAdd.text.toString()
+                            )
                         groupList.add(groupModel)
-                        val listJson = gson.toJson(groupList)
-                        local.groups = listJson
-                        val intentResult = Intent()
-                        intentResult.putExtra("groupsJson", listJson)
-                        setResult(Activity.RESULT_OK, intentResult)
+                        groupsDao.insert(groupModel)
+                        setResult(Activity.RESULT_OK)
                         finish()
                     }
 
@@ -117,8 +115,8 @@ class AddingActivity : AppCompatActivity() {
             }
             "student" -> {
                 title = "Adding Student"
-                if (local.students.isNotEmpty()) {
-                    studentList.addAll(local.students.toStudentsListFromJson())
+                if (studentsDao.getAll().isNotEmpty()) {
+                    studentList.addAll(studentsDao.getAll())
                 }
                 layoutImage.hint = "Surname"
                 saveButton.setOnClickListener {
@@ -127,24 +125,22 @@ class AddingActivity : AppCompatActivity() {
                     if (newName.isEmpty() || imageUrlAdd.text.toString().isEmpty()) {
                         Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
                     } else {
-                        val studentModel = StudentModel(
-                            intent.getStringExtra("GROUPNAME")!!,
-                            newName,
-                            imageUrlAdd.text.toString()
-                        )
+                        val studentModel =
+                            StudentData(
+                                intent.getLongExtra("group_id",0),
+                                newName,
+                                imageUrlAdd.text.toString()
+                            )
                         studentList.add(studentModel)
-                        val listJson = gson.toJson(studentList)
-                        local.students = listJson
-                        val intentResult = Intent()
-                        intentResult.putExtra("studentsJson", listJson)
-                        setResult(Activity.RESULT_OK, intentResult)
+                        studentsDao.insert(studentModel)
+                        setResult(Activity.RESULT_OK)
                         finish()
                     }
 
                 }
             }
             "editCourse" -> {
-                val courseEdit = intent.getSerializableExtra("editableCourse") as CourseModel
+                val courseEdit = intent.getSerializableExtra("editableCourse") as CourseData
                 title = "Editing Course"
                 nameAdd.setText(courseEdit.name)
                 imageUrlAdd.setText(courseEdit.imageUrl)
@@ -153,28 +149,16 @@ class AddingActivity : AppCompatActivity() {
                     if (newName.isEmpty() || imageUrlAdd.text.toString().isEmpty()) {
                         Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
                     } else {
-                        val editedList = local.courses.toCoursesListFromJson()
-                        editedList.forEach {
-                            if (it.name == courseEdit.name && it.username == courseEdit.username) {
-                                it.name = newName
-                                it.imageUrl = imageUrlAdd.text.toString()
-                            }
-                        }
-                        local.courses = gson.toJson(editedList)
-                        val editedGroupList = local.groups.toGroupsListFromJson()
-                        editedGroupList.forEach {
-                            if (it.courseName == courseEdit.name) {
-                                it.courseName = newName
-                            }
-                        }
-                        local.groups = gson.toJson(editedGroupList)
+                        courseEdit.name=newName
+                        courseEdit.imageUrl=imageUrlAdd.text.toString()
+                        courseDao.update(courseEdit)
                         finish()
                     }
 
                 }
             }
             "editGroup" -> {
-                val groupEdit = intent.getSerializableExtra("editableGroup") as GroupModel
+                val groupEdit = intent.getSerializableExtra("editableGroup") as GroupData
                 title = "Editing Group"
                 nameAdd.setText(groupEdit.name)
                 imageUrlAdd.setText(groupEdit.imageUrl)
@@ -183,28 +167,16 @@ class AddingActivity : AppCompatActivity() {
                     if (newName.isEmpty() || imageUrlAdd.text.toString().isEmpty()) {
                         Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
                     } else {
-                        val editedList = local.groups.toGroupsListFromJson()
-                        editedList.forEach {
-                            if (it.name == groupEdit.name && it.courseName == groupEdit.courseName) {
-                                it.name = newName
-                                it.imageUrl = imageUrlAdd.text.toString()
-                            }
-                        }
-                        local.groups = gson.toJson(editedList)
-                        val editedStudentList = local.students.toStudentsListFromJson()
-                        editedStudentList.forEach {
-                            if (it.groupName == groupEdit.name) {
-                                it.groupName = newName
-                            }
-                        }
-                        local.students = gson.toJson(editedStudentList)
+                        groupEdit.name=newName
+                        groupEdit.imageUrl=imageUrlAdd.text.toString()
+                        groupsDao.update(groupEdit)
                         finish()
                     }
 
                 }
             }
             "editStudent" -> {
-                val studentEdit = intent.getSerializableExtra("editableStudent") as StudentModel
+                val studentEdit = intent.getSerializableExtra("editableStudent") as StudentData
                 title = "Editing Student"
                 layoutImage.hint = "Surname"
                 nameAdd.setText(studentEdit.name)
@@ -215,14 +187,9 @@ class AddingActivity : AppCompatActivity() {
                     if (newName.isEmpty() || newSurname.isEmpty()) {
                         Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
                     } else {
-                        val editedList = local.students.toStudentsListFromJson()
-                        editedList.forEach {
-                            if (it.name == studentEdit.name && it.groupName == studentEdit.groupName) {
-                                it.name = newName
-                                it.surname = newSurname
-                            }
-                        }
-                        local.students = gson.toJson(editedList)
+                        studentEdit.name=newName
+                        studentEdit.surname=newSurname
+                        studentsDao.update(studentEdit)
                         finish()
                     }
 

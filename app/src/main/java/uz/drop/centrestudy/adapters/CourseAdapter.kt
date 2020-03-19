@@ -4,13 +4,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
-import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.item.view.*
 import uz.drop.centrestudy.R
-import uz.drop.centrestudy.model.CourseModel
+import uz.drop.centrestudy.data.locale.room.entities.CourseData
 import uz.xsoft.lesson16pdp13.utils.extesions.loadFromUrl
 
-class CourseAdapter(val list: ArrayList<CourseModel>) : BaseAdapter() {
+class CourseAdapter(val list: ArrayList<CourseData>) : BaseAdapter() {
     private var editListener:((Int)->Unit)?=null
     private var deleteListener:((Int)->Unit)?=null
 
@@ -36,7 +35,7 @@ class CourseAdapter(val list: ArrayList<CourseModel>) : BaseAdapter() {
         deleteListener=listener
     }
 
-    override fun getItem(position: Int): CourseModel = list[position]
+    override fun getItem(position: Int): CourseData = list[position]
 
     override fun getItemId(position: Int): Long = position.toLong()
 

@@ -5,51 +5,41 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_student.*
 import uz.drop.centrestudy.adapters.StudentAdapter
+import uz.drop.centrestudy.data.locale.room.AppDatabase
 import uz.drop.centrestudy.model.LocalStorage
-import uz.drop.centrestudy.model.StudentModel
-import uz.drop.centrestudy.util.extensions.toCoursesListFromJson
-import uz.drop.centrestudy.util.extensions.toGroupsListFromJson
+import uz.drop.centrestudy.data.locale.room.entities.StudentData
 import uz.drop.centrestudy.util.extensions.toStudentsListFromJson
 
 class StudentActivity : AppCompatActivity() {
     private val localStorage = LocalStorage.instance
-    private val studentsList = ArrayList<StudentModel>()
+    private val studentsList = ArrayList<StudentData>()
     private val adapter = StudentAdapter(studentsList)
     private val gson = Gson()
+    private val studentsDao = AppDatabase.getDatabase().studentDao()
     val STUDENT_REQUEST_CODE = 3
     val STUDENT_EDIT_REQUEST_CODE = 30
-    lateinit var groupName: String
+     var groupId: Long=0
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_student)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         title="Students"
 
-        groupName = intent.getStringExtra("groupName") as String
+        groupId = intent.getLongExtra("group_id",0) as Long
         listView.adapter = adapter
-        if (localStorage.students.isNotEmpty()) {
-            val list = localStorage.students.toStudentsListFromJson()
-            val filter = list.filter {
-                it.groupName == groupName
-            }
+        if (studentsDao.getAll().isNotEmpty()) {
+            val list = studentsDao.getAll()
+            val filter = studentsDao.filterStudentsById(groupId)
             studentsList.addAll(filter)
         }
 
         adapter.setOnDeleteClickListener {pos->
+            studentsDao.delete(studentsList[pos])
             studentsList.removeAt(pos)
-            localStorage.students = gson.toJson(studentsList)
-            val oldList = localStorage.groups.toGroupsListFromJson()
-            oldList.forEach {
-                if (it.name == groupName) {
-                    it.studentCount--
-                }
-            }
-            localStorage.groups = gson.toJson(oldList)
             adapter.notifyDataSetChanged()
 
         }
@@ -66,12 +56,9 @@ class StudentActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (localStorage.students.isNotEmpty()) {
-            val list = localStorage.students.toStudentsListFromJson()
+        if (studentsDao.getAll().isNotEmpty()) {
             studentsList.clear()
-            val filter = list.filter {
-                it.groupName == groupName
-            }
+            val filter=studentsDao.filterStudentsById(groupId)
             studentsList.addAll(filter)
             adapter.notifyDataSetChanged()
         }
@@ -94,7 +81,7 @@ class StudentActivity : AppCompatActivity() {
                     Intent(this, AddingActivity::class.java).putExtra(
                         "actionName",
                         "student"
-                    ).putExtra("GROUPNAME", groupName), STUDENT_REQUEST_CODE
+                    ).putExtra("group_id", groupId), STUDENT_REQUEST_CODE
                 )
             }
 
@@ -108,21 +95,8 @@ class StudentActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == STUDENT_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            val studentsJson = data!!.getStringExtra("studentsJson")!!
-            val allList = studentsJson.toStudentsListFromJson()
             studentsList.clear()
-            val filter = allList.filter {
-                it.groupName == groupName
-            }
-            studentsList.addAll(filter)
-            adapter.notifyDataSetChanged()
-            val oldList = localStorage.groups.toGroupsListFromJson()
-            oldList.forEach {
-                if (it.name == groupName) {
-                    it.studentCount++
-                }
-            }
-            localStorage.groups = gson.toJson(oldList)
+
         }
     }
 }

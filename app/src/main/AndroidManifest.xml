@@ -17,7 +17,9 @@
         <activity android:name=".AddingActivity" />
         <activity android:name=".CoursesActivity" />
         <activity android:name=".TermsActivity" />
-        <activity android:name=".SignUpActivity" />
+        <activity android:name=".SignUpActivity">
+
+        </activity>
         <activity android:name=".SignInActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -23,13 +23,4 @@ class LocalStorage private constructor(context: Context) {
         set(value) =
             pref.edit().putString("lastUser", value).apply()
         get() = pref.getString("lastUser", "")!!
-    var courses: String
-        set(value) = pref.edit().putString("courses", value).apply()
-        get() = pref.getString("courses", "")!!
-    var groups: String
-        set(value) = pref.edit().putString("groups", value).apply()
-        get() = pref.getString("groups", "")!!
-    var students: String
-        set(value) = pref.edit().putString("students", value).apply()
-        get() = pref.getString("students", "")!!
 }

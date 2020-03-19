@@ -6,12 +6,14 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_sign_in.*
+import uz.drop.centrestudy.data.locale.room.AppDatabase
 import uz.drop.centrestudy.model.LocalStorage
-import uz.drop.centrestudy.model.UserModel
+import uz.drop.centrestudy.data.locale.room.entities.UserData
 import uz.drop.centrestudy.util.extensions.toUsersListFromJson
 
 class SignInActivity : AppCompatActivity() {
     private val gson = Gson()
+    val usersDao = AppDatabase.getDatabase().usersDao()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sign_in)
@@ -33,17 +35,27 @@ class SignInActivity : AppCompatActivity() {
         signInBtn.setOnClickListener {
             val username = username.text.toString()
             val password = password.text.toString()
-            val notRememberedUser = UserModel(username, password)
-            if (localStorage.userData.isNotEmpty()) {
-                val usersList = localStorage.userData.toUsersListFromJson()
+            val notRememberedUser =
+                UserData(
+                    username,
+                    password
+                )
+            val usersList = usersDao.getAll()
+            if (usersList.isNotEmpty()) {
                 usersList.forEach {
                     if (username == it.username && password == it.password) {
                         if (rememberCheckBox.isChecked) {
-                            localStorage.lastUser = gson.toJson(UserModel(username, password, true))
-                            startActivity(Intent(this, CoursesActivity::class.java))
+                            it.lastUser = true
+                            notRememberedUser.lastUser=true
+                            notRememberedUser.id = it.id
+                            localStorage.lastUser = gson.toJson(notRememberedUser)
+                            startActivity(Intent(this, CoursesActivity::class.java)
+                                .putExtra("currentUser", notRememberedUser)
+                            )
                             finish()
                             return@setOnClickListener
                         } else {
+                            notRememberedUser.id = it.id
                             startActivity(
                                 Intent(
                                     this,
